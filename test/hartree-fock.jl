@@ -1,25 +1,31 @@
 module test_hartree_fock
 
 using SelfConsistentHartreeFock, SecondQuantizedAlgebra
+import SecondQuantizedAlgebra as SQA
+using Symbolics
 using Test
 
 h = FockSpace(:cavity)
 
 @qnumbers a::Destroy(h)
-@cnumbers F Δ K κ
+@variables F::Real Δ::Real K::Real κ::Real
 
-H = -Δ * a' * a + K * (a'^2 * a^2) + F * (a' + a) / 2
+H = -Δ * a' * a + K * (a'^2 * a^2) + F * (a' + a)
 
-testcase1 = K * (a'^2 * a^2)
-result = hartree_fock_approx(testcase1)
-collect_dict(result)
+testcase1 = (a'^2 * a^2)
+testresult = hartree_fock_approx(testcase1)
+result = SQA.average(a' * a') * a * a + SQA.average(a' * a) * a'* a + SQA.average(a' * a) * a'* a + SQA.average(a' * a) * a'* a + SQA.average(a' * a) * a'* a + SQA.average(a * a) * a'* a'
+@test isequal(result, testresult)
+
 
 testcase2 = (a'^2 * a)
-result = hartree_fock_approx(testcase2)
-collect_dict(result)
+testresult = hartree_fock_approx(testcase2)
+result = SQA.average(a' * a') * a + SQA.average(a' * a) * a' + SQA.average(a' * a) * a'
+@test isequal(result, testresult)
 
 testcase3 = (a' * a^2)
-result = hartree_fock_approx(testcase3)
-collect_dict(result)
+testresult = hartree_fock_approx(testcase3)
+result = SQA.average(a' * a) * a + SQA.average(a' * a) * a + SQA.average(a * a) * a'
+@test isequal(result, testresult)
 
 end

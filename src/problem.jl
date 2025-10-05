@@ -23,7 +23,7 @@ struct IterativeProblem
         meanfield = compile_iterative_eom(sys, unknowns, vars, p)
         dynamical_matrix = compile_dynamical_matrix(sys, unknowns, vars, p)
 
-        return new(sys, meanfield, dynamical_matrix,  SQA.average.(unknowns), p)
+        return new(sys, meanfield, dynamical_matrix, SQA.average.(unknowns), p)
     end
 end
 function Base.show(io::IO, ::MIME"text/plain", prob::IterativeProblem)
@@ -37,7 +37,9 @@ function construct_iterative_eom(sys::HartreeFockSystem)
     return construct_iterator_eom(eom, vars)
 end
 
-function compile_iterative_eom(sys::HartreeFockSystem, unknowns::Vector{QNumber}, vars::Vector{QNumber}, p::Dict)
+function compile_iterative_eom(
+    sys::HartreeFockSystem, unknowns::Vector{QNumber}, vars::Vector{QNumber}, p::Dict
+)
     A, Fs = construct_iterative_eom(sys)
 
     averaged_vars = SQA.average.(vars)

@@ -9,7 +9,11 @@ using UnPack: @unpack
 using LinearAlgebra: Diagonal
 
 export displacement,
-    collect_dict, hartree_fock_approx, HartreeFockSystem, HartreeFockProblem, IterativeProblem
+    collect_dict,
+    hartree_fock_approx,
+    HartreeFockSystem,
+    HartreeFockProblem,
+    IterativeProblem
 
 include("utils.jl")
 include("symbolic_utils.jl")
