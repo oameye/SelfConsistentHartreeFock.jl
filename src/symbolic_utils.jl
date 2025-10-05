@@ -19,6 +19,8 @@ function get_prefactor(x::BasicSymbolic, y)
         _    => x
     end
 end
+get_prefactor(x, y) = zero(x)
+
 function get_independent(x::BasicSymbolic, vars)
     @compactified x::BasicSymbolic begin
         Add  => sum([get_independent(arg, vars) for arg in SymbolicUtils.arguments(x)])
@@ -28,3 +30,4 @@ function get_independent(x::BasicSymbolic, vars)
         _    => x
     end
 end
+get_independent(x, vars) = x
