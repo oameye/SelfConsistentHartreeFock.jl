@@ -30,6 +30,10 @@ function Base.show(io::IO, ::MIME"text/plain", prob::IterativeProblem)
     return print(io, "IterativeProblem")
 end
 
+function remake(prob::IterativeProblem, p::Dict)
+    return IterativeProblem(prob.sys, p)
+end
+
 function construct_iterative_eom(sys::HartreeFockSystem)
     operators = sys.operators
     vars = SQA.average.(vcat(operators, SQA.adjoint.(operators)))
@@ -94,6 +98,8 @@ end
 function compile_dynamical_matrix(sys::HartreeFockSystem, unknowns, vars, p::Dict)
     @unpack operators, dynamical_matrix, rates = sys
     @unpack A, B = dynamical_matrix
+    A = unwrap.(A)
+    B = unwrap.(B) # This is needed to make conj work properly on B
 
     # dynamical matrix
     M = [

@@ -1,6 +1,7 @@
-using SelfConsistentHartreeFock, SecondQuantizedAlgebra
-using Symbolics, SymbolicUtils
-using UnPack
+using SelfConsistentHartreeFock, SecondQuantizedAlgebra, Plots
+using MatrixEquations, UnPack, LinearAlgebra
+import SecondQuantizedAlgebra as SQA
+using Symbolics
 
 h = FockSpace(:cavity)
 
@@ -10,19 +11,47 @@ h = FockSpace(:cavity)
 H = -Δ * a' * a + K * (a'^2 * a^2) + F * (a' + a) / 2
 
 sys = HartreeFockSystem(H, [a], [κ])
-collect_dict(sys.H)
-@unpack A, B = sys.dynamical_matrix
+sys.mean_field_eom
+A, Fs = SelfConsistentHartreeFock.construct_iterative_eom(sys)
 
-p = Dict(Δ => -0.01, K => 0.001, F => 0.01, κ => 0.001)
+p = Dict(F => 0.01, Δ => -0.01, K => 0.001, κ => 0.001)
 problem = IterativeProblem(sys, p)
 
-using MatrixEquations, UnPack, LinearAlgebra
+α0 = ComplexF64[rand(ComplexF64), 0.0, 0.0]
+fixed_point(problem, α0)
 
-α = ComplexF64[1.0 + 1im, 0.0, 0.0]
+Δsweep = range(-0.01, 0.03, 101)
+results_up = parameter_sweep(problem, Δ, Δsweep, α0)
+results_down = parameter_sweep(problem, Δ, reverse(Δsweep), α0)
 
-@unpack M, D = problem.dynamical_matrix
-M(α)
-D(α)
-eigvals(M(α))
-C = lyapc(M(α), D(α)) # Solves M X + X M^† + D = 0
-sum(diag(C)) # 0.9999999999999996 + 0.0im
+amplitude_up = map(results_up) do result
+    result.αs[1] |> norm
+end
+amplitude_down = map(results_down) do result
+    result.αs[1] |> norm
+end
+
+fluctuation_up = map(results_up) do result
+    result.ns[1]
+end
+fluctuation_down = map(results_down) do result
+    result.ns[1]
+end
+
+anomalous_up = map(results_up) do result
+    result.ms[1] |> norm
+end
+anomalous_down = map(results_down) do result
+    result.ms[1] |> norm
+end
+
+plt1 = plot(Δsweep, amplitude_up; xlabel = "Detuning Δ", ylabel = "Amplitude", legend = false)
+plot!(reverse(Δsweep)[1:55], amplitude_down)
+
+plt2 = plot(Δsweep, fluctuation_up; xlabel = "Detuning Δ", ylabel = "Fluctuation", legend = false)
+plot!(reverse(Δsweep)[1:55], fluctuation_down)
+
+plt3 = plot(Δsweep, anomalous_up; xlabel = "Detuning Δ", ylabel = "Anomalous", legend = false)
+plot!(reverse(Δsweep)[1:55], anomalous_down)
+
+plot(plt1, plt2, plt3; layout = (3, 1), size=(500, 600))

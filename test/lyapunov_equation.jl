@@ -18,12 +18,20 @@ using Test
     p = Dict(F => 1.0, Δ => 0.0, K => 1.0, κ => 1.0)
     problem = IterativeProblem(sys, p)
 
-    α = ComplexF64[1.0 + 0.0im, 0.0, 0.0]
+    α = ComplexF64[rand(ComplexF64), 0.0, 0.0]
     @unpack M, D = problem.dynamical_matrix
     _M = M(α)
     _D = D(α)
 
-    @test _M == [-0.5-4.0im   0.0-2.0im; 0.0+2.0im -0.5+4.0im]
+    my_A(α, p) = -p[Δ] + 4 * p[K] * α[2] + 4 * p[K] * α[1] * conj(α[1])
+    my_B(α, p) = 2 * (p[K] * α[3] + p[K] * (α[1]^2))
+    my_M(α, p) =
+        [
+            (-im*my_A(α, p))  (-im*my_B(α, p))
+            (im*conj(my_B(α, p)))  (im*my_A(α, p))
+        ] - I(2) * p[κ] / 2
+
+    @test _M == my_M(α, p)
     @test _D == [1.0 0.0; 0.0 0]
 
     @test sum(eigvals(_M)) ≈ -1.0 + 0.0im
