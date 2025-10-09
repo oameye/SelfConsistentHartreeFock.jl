@@ -35,3 +35,30 @@ function find_conjugate_pairs(ops)
     end
     return pairs
 end
+
+function triu_vec(A::AbstractMatrix)
+    m, n = size(A)
+    p = min(m, n)
+    # number of elements in the upper triangle of an m×n matrix
+    len = p * (n + 1) - div(p * (p + 1), 2)
+
+    v = Vector{eltype(A)}()
+    sizehint!(v, len)
+
+    @inbounds for j in 1:n
+        for i in 1:min(j, m)
+            push!(v, A[i, j])
+        end
+    end
+
+    return v
+end
+
+# [re1, im1, re2, im2, ...]  ->  Vector{Complex{T}}   (no copy)
+as_complex_view(x::Vector{T}) where {T<:Real} = begin
+    @assert iseven(length(x)) "length must be even (pairs of re,im)."
+    reinterpret(Complex{T}, x)
+end
+# Back to interleaved real/imag view (no copy)
+as_interleaved_view(z::Vector{Complex{T}}) where {T<:Real} =
+    reinterpret(T, z)

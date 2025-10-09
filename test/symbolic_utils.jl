@@ -81,4 +81,35 @@ end
     @test isequal(independent_via_two_step, get_independent(uexpr3, [ux, uy]))
 end
 
+@testset "get_linear" begin
+    using SelfConsistentHartreeFock: get_linear_prefactor, get_nonlinear_terms
+
+    h = FockSpace(:cavity)
+
+    @qnumbers a::Destroy(h)
+    @variables G::Real Δ::Real K::Real κ::Real
+
+    H = -Δ * a' * a + K * (a'^2 * a^2) + G * (a' * a' + a * a)
+    sys = HartreeFockSystem(H, [a], [κ])
+    exprs1 = unwrap(sys.mean_field_eom[1])
+    exprs2 = unwrap(sys.mean_field_eom[2])
+
+    result1 = get_linear_prefactor(exprs1, SQA.average(a), [SQA.average(a), SQA.average(a')])
+    result2 = get_linear_prefactor(
+        exprs1, SQA.average(a'), [SQA.average(a), SQA.average(a')]
+    )
+    @test isequal(result1, unwrap(2 * G + 2 * K * SQA.average(a' * a')))
+    @test isequal(result2, unwrap(-Δ + 4 * K * SQA.average(a' * a)))
+
+    result = get_nonlinear_terms(exprs1, SQA.average(a), [SQA.average(a), SQA.average(a')])
+    @test isequal(result, unwrap(2 * K * SQA.average(a')^2 * SQA.average(a)))
+
+    result = get_nonlinear_terms(exprs2, SQA.average(a'), [SQA.average(a), SQA.average(a')])
+    @test isequal(result, unwrap(2 * K * SQA.average(a)^2 * SQA.average(a')))
+
+    result2 = get_nonlinear_terms(exprs2, [SQA.average(a), SQA.average(a')])
+    result1 = get_nonlinear_terms(exprs1, [SQA.average(a), SQA.average(a')])
+    @test isequal(result2, unwrap(2 * K * SQA.average(a)^2 * SQA.average(a')))
+    @test isequal(result1, unwrap(2 * K * SQA.average(a')^2 * SQA.average(a)))
 end
+end # module

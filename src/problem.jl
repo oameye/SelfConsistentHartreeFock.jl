@@ -4,8 +4,9 @@ struct DynamicalMatrixFunction
 end
 
 struct MeanfieldFunction
-    A::Function
-    Fs::Function
+    I::Function
+    F::Function
+    J::Function
 end
 
 struct IterativeProblem
@@ -37,49 +38,28 @@ end
 function construct_iterative_eom(sys::HartreeFockSystem)
     operators = sys.operators
     vars = SQA.average.(vcat(operators, SQA.adjoint.(operators)))
-    eom = unwrap.(sys.mean_field_eom)
-    return construct_iterator_eom(eom, vars)
+    eom = sys.mean_field_eom
+    jac = Symbolics.jacobian(eom, vars)
+    return unwrap.((vars, eom, jac))
 end
 
 function compile_iterative_eom(
     sys::HartreeFockSystem, unknowns::Vector{QNumber}, vars::Vector{QNumber}, p::Dict
 )
-    A, Fs = construct_iterative_eom(sys)
+    I, eom, jac = construct_iterative_eom(sys)
 
     averaged_vars = SQA.average.(vars)
-    A_oop, _ = compile(A, averaged_vars, p)
-    Af = wrap_function_vars(A_oop, unknowns, vars)
-    Fs_oop, _ = compile(Fs, averaged_vars, p)
-    Ff = wrap_function_vars(Fs_oop, unknowns, vars)
 
-    return MeanfieldFunction(Af, Ff)
-end
+    F_oop, _ = compile(eom, averaged_vars, p)
+    Ff = wrap_function_vars(F_oop, unknowns, vars)
 
-function get_prefactors(eom, vars)
-    dict = Dict{Any,Any}()
-    eom = deepcopy(eom)
-    for var in vars
-        prefactor = get_prefactor(eom, var)
-        dict[var] = prefactor
-        eom = Symbolics.simplify(eom - prefactor * var)
-    end
-    dict[1] = get_independent(eom, vars)
-    return dict
-end
-function construct_iterator_eom(eom, vars)
-    N = length(vars)
-    A = zeros(Num, N, N)
-    Fs = zeros(Num, N)
-    for i in eachindex(eom)
-        eq = eom[i]
-        prefactors = get_prefactors(eq, vars)
-        for j in 1:N
-            var = vars[j]
-            A[i, j] = prefactors[var]
-        end
-        Fs[i] = get_independent(eq, vars)
-    end
-    return A, Fs
+    jac_oop, _ = compile(jac, averaged_vars, p)
+    Jf = wrap_function_vars(jac_oop, unknowns, vars)
+
+    I_oop, _ = compile(I, averaged_vars, p)
+    If = wrap_function_vars(I_oop, unknowns, vars)
+
+    return MeanfieldFunction(If, Ff, Jf)
 end
 
 function compile(ex::AbstractArray{Complex{Num}}, vars, p::Dict)
@@ -103,8 +83,8 @@ function compile_dynamical_matrix(sys::HartreeFockSystem, unknowns, vars, p::Dic
 
     # dynamical matrix
     M = [
-        (-im * A - Diagonal(rates) / 2) (-im * B)
-        (im * conj.(B)) (im * transpose(A) - Diagonal(rates) / 2)
+        (-im * A-Diagonal(rates) / 2)   (-im*B)
+        (im*conj.(B))   (im * transpose(A)-Diagonal(rates) / 2)
     ]
 
     # vacuum input noise
@@ -171,4 +151,32 @@ end
 #         return vcat(f_dyn(vars)[:], f_eom(vars))
 #     end
 #     return f
+# end
+
+# function get_prefactors(eom, vars)
+#     dict = Dict{Any,Any}()
+#     eom = deepcopy(eom)
+#     for var in vars
+#         prefactor = get_prefactor(eom, var)
+#         dict[var] = prefactor
+#         eom = Symbolics.simplify(eom - prefactor * var)
+#     end
+#     dict[1] = get_independent(eom, vars)
+#     return dict
+# end
+# function construct_iterator_eom(eom, vars)
+#     N = length(vars) # vars is ordered as [a1, a2, ..., a1†, a2†, ...]
+#     L = zeros(Num, N, N)
+#     Fs = zeros(Num, N)
+#     Ns = zeros(Num, N)
+#     for i in eachindex(eom)
+#         eq = eom[i]
+#         for j in 1:N
+#             var = vars[j]
+#             L[i, j] =  get_linear_prefactor(eq,var, vars)
+#         end
+#         Fs[i] = get_independent(eq, vars)
+#         Ns[i] = get_nonlinear_terms(eq, vars)
+#     end
+#     return L, Ns, Fs
 # end
