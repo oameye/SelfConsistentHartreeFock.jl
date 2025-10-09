@@ -6,10 +6,10 @@ import Combinatorics: combinations
 using SymbolicUtils: @compactified, BasicSymbolic, isadd, SymbolicUtils
 using Symbolics: Num, Symbolics, unwrap
 using UnPack: @unpack
-using LinearAlgebra: Diagonal
+using LinearAlgebra: Diagonal, norm, I, dot, lyap
 
 using MatrixEquations: MatrixEquations
-using FixedPointAcceleration: FixedPointAcceleration
+using FixedPointAccelerationNext: FixedPointAccelerationNext
 
 export displacement,
     collect_dict,
@@ -19,7 +19,8 @@ export displacement,
     IterativeProblem,
     remake,
     fixed_point,
-    parameter_sweep
+    parameter_sweep,
+    parameter_sweep_compare
 
 include("utils.jl")
 include("symbolic_utils.jl")
@@ -28,5 +29,6 @@ include("hartree-fock_approximation.jl")
 include("system.jl")
 include("problem.jl")
 include("self_consistent_iteration.jl")
+include("own_fixed-Point_iterator.jl")
 
 end # module SelfConsistentHartreeFock

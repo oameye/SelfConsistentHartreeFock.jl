@@ -5,4 +5,5 @@ using Test
     @testset "Hartree-Fock_approximation" include("hartree-fock.jl")
     @testset "symbolic utils" include("symbolic_utils.jl")
     @testset "lyapunov solver" include("lyapunov_equation.jl")
+    @testset "fixed point solvers" include("fixed_point.jl")
 end
