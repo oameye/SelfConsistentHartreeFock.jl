@@ -9,7 +9,7 @@ using UnPack: @unpack
 using LinearAlgebra: Diagonal, norm, I, dot, lyap
 
 using MatrixEquations: MatrixEquations
-using FixedPointAccelerationNext: FixedPointAccelerationNext
+using FixedPointAcceleration: FixedPointAcceleration
 
 export displacement,
     collect_dict,

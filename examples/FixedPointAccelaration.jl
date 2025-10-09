@@ -1,5 +1,4 @@
 using SelfConsistentHartreeFock, SecondQuantizedAlgebra, Plots
-using FixedPointAccelerationNext
 import SecondQuantizedAlgebra as SQA
 using Symbolics, LinearAlgebra
 
@@ -21,19 +20,20 @@ problem = IterativeProblem(sys, p)
 picard_sol = fixed_point(
     problem, α0; solver=:picard, maxiters=2000, damping=0.5, rtol=1e-10
 )
-cfg = FixedPointConfig(relaxation=0.5)
-method=FixedPointAccelerationNext.Aitken()
-fpa_sol = fixed_point(problem, α0; method, cfg)
+Dampening = 0.2
+MaxIter = 10000
+ConvergenceMetricThreshold = 1e-12
+fpa_sol = fixed_point(problem, α0; Dampening, MaxIter, ConvergenceMetricThreshold)
 
 Δsweep = range(-0.01, 0.03, 501)
 results_up_picard = parameter_sweep(
     problem, Δ, Δsweep, α0; solver=:picard, maxiters=2000, damping=0.5, rtol=1e-10
 )
-results_up_fpa = parameter_sweep(problem, Δ, Δsweep, α0; method, cfg)
+results_up_fpa = parameter_sweep(problem, Δ, Δsweep, α0; Dampening, MaxIter, ConvergenceMetricThreshold)
 results_down_picard = parameter_sweep(
     problem, Δ, reverse(Δsweep), α0; solver=:picard, maxiters=2000, damping=0.5, rtol=1e-10
 )
-results_down_fpa = parameter_sweep(problem, Δ, reverse(Δsweep), α0)
+results_down_fpa = parameter_sweep(problem, Δ, reverse(Δsweep), α0; Dampening, MaxIter, ConvergenceMetricThreshold)
 
 function summarize(results)
     amplitude = map(results) do result

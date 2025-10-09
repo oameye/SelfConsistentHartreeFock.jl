@@ -36,13 +36,13 @@ end
 
 function fixed_point_accelerated(problem::IterativeProblem, α0; kwargs...)
     f(α) = self_consistent_fixed_point(α, problem)
-    return FixedPointAccelerationNext.solve(f, α0; kwargs...)
+    return FixedPointAcceleration.fixed_point(f, α0; kwargs...)
 end
 
 function fixed_point(problem::IterativeProblem, α0; solver::Symbol=:fpa, kwargs...)
     if solver === :fpa
         FPresult = fixed_point_accelerated(problem, α0; kwargs...)
-        return Result(FPresult.fixed_point)
+        return Result(FPresult.FixedPoint_)
     elseif solver === :picard
         picard = fixed_point_picard(problem, α0; kwargs...)
         return picard.converged ? Result(picard.value) : Result(missing)
@@ -63,14 +63,14 @@ function parameter_sweep(
         for val in range
             local_problem = remake(problem, merge(p, Dict(param => val)))
             f(α) = self_consistent_fixed_point(α, local_problem)
-            FP = FixedPointAccelerationNext.solve(
+            FP = FixedPointAcceleration.fixed_point(
                 f, α; kwargs...
             )
-            if ismissing(FP.fixed_point)
+            if ismissing(FP.FixedPoint_)
                 break
             end
-            push!(results, Result(FP.fixed_point))
-            α = FP.fixed_point
+            push!(results, Result(FP.FixedPoint_))
+            α = FP.FixedPoint_
         end
     elseif solver === :picard
         α = α0
