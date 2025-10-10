@@ -9,13 +9,16 @@ function hasvar(x, y)
 end
 
 # Recursive occurrence test (handle leaf Syms safely)
-occurs(x::SymbolicUtils.BasicSymbolic, v) =
-    isequal(x, v) || (SymbolicUtils.istree(x) && any(occurs(arg, v) for arg in SymbolicUtils.arguments(x)))
+function occurs(x::SymbolicUtils.BasicSymbolic, v)
+    return isequal(x, v) || (
+        SymbolicUtils.istree(x) && any(occurs(arg, v) for arg in SymbolicUtils.arguments(x))
+    )
+end
 occurs(x, v) = isequal(x, v)
 
 # True if none of the args depend (even nonlinearly) on any variable in vars
 function hasnotvars(args, vars)
-    all(!occurs(arg, v) for arg in args for v in vars)
+    return all(!occurs(arg, v) for arg in args for v in vars)
 end
 
 # Node-level independence
@@ -84,7 +87,6 @@ function get_nonlinear_terms(x::BasicSymbolic, v, vars)
     end
 end
 get_nonlinear_terms(x, v, vars) = 0
-
 
 # Any dependency on any variable in vars
 any_occurs(x, vars) = any(occurs(x, v) for v in vars)

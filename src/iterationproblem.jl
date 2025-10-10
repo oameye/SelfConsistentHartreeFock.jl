@@ -19,7 +19,7 @@ struct IterativeProblem
     function IterativeProblem(sys::HartreeFockSystem, p::Dict)
         @unpack operators, correlators = sys
         unknowns = vcat(operators, correlators)
-        vars = (unique(vcat(unknowns, SQA.adjoint.(unknowns))))
+        vars = unique(vcat(unknowns, SQA.adjoint.(unknowns)))
 
         meanfield = compile_iterative_eom(sys, unknowns, vars, p)
         dynamical_matrix = compile_dynamical_matrix(sys, unknowns, vars, p)

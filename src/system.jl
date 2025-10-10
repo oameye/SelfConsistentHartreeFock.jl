@@ -32,11 +32,11 @@ sortby_creation(x) = sum(map(y -> y isa SQA.Create, x.args_nc))
 # end
 
 function steady_state_function(dict::Dict, operators)
-    eom = Vector{Num}(undef, length(operators) * 2)
+    eom = Vector{Num}(undef, length(operators))
     for idx in eachindex(operators)
         op = operators[idx]
         eom[idx] = dict[op]
-        eom[idx + length(operators)] = dict[op']
+        # eom[idx + length(operators)] = dict[op']
     end
     return eom
 end
@@ -67,9 +67,12 @@ function Base.show(io::IO, ::MIME"text/plain", sys::HartreeFockSystem)
 end
 
 function make_correlators(operators::Vector{<:SQA.QNumber})
+    C = get_correlation_matrix(operators)
+    return get_correlation_vector(C)
+end
+function get_correlation_matrix(operators::Vector{<:SQA.QNumber})
     v = vcat(operators, adjoint.(operators))
     C = v * adjoint(v)
-    return get_correlation_vector(C)
 end
 function get_correlation_vector(C::AbstractMatrix)
     vcat(
