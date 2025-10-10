@@ -44,13 +44,7 @@ end
 function SQA._conj(v::SQA.Average)
     arg = v.arguments[1]
     adj_arg = adjoint(arg)
-    if has_cluster(arg)
-        aons, N = SQA.get_cluster_stuff(hilbert(arg))
-        names = get_names(arg)
-        return substitute_redundants(_average(adj_arg), aons, names)
-    else
-        return _average(adj_arg)
-    end
+    return SQA._average(adj_arg)
 end
 
 function replace_conj(eqs, vs)
